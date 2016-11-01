@@ -1,34 +1,47 @@
-#include <avr/sleep.h>
+#include "avr/sleep.h"
 #include "Adafruit_FONA.h"
+#include "Keypad.h"
 
-//////////////////////
-///// PARAMETERS /////
-//////////////////////
+////////////////////////////////
+////////// PARAMETERS //////////
+////////////////////////////////
 
 // Arduino will wake from sleep when WAKE_PIN is pulled low
 #define WAKE_PIN 2
 #define BUT_ANS 7
 #define BUT_END 8
 
-// RX/TX are in reference to the Arduino
+// RX/TX are in reference to the Arduino, not SIM800
 #define GSM_RX 3
 #define GSM_TX 4
 #define GSM_RST 5
 #define GSM_RING 6
 
 // TIMEOUT_SLEEP is the time to stay awake from last activity until sleep (milliseconds)
-#define TIMEOUT_SLEEP
+#define TIMEOUT_SLEEP 60000
 
 // Comment the following line to use HW serial
 #define usb_testing_config
 
-//////////////////////////
-///// END PARAMETERS /////
-//////////////////////////
+// Keypad pinout
+byte rowPins[4] = {9, 10, 11, 12};
+byte colPins[3] = {A0, A1, A2};
 
-char replybuffer[255];
-uint8_t phonenumber[15];
-uint8_t phonenumberlength = 0;
+////////////////////////////////////
+////////// END PARAMETERS //////////
+////////////////////////////////////
+
+char phoneNumber[15];
+uint8_t phoneNumberLength = 0;
+
+char keys[4][3] = {
+  {'1', '2', '3'},
+  {'4', '5', '6'},
+  {'7', '8', '9'},
+  {'#', '0', '*'}
+};
+
+unsigned long lastActiveTime;
 
 #ifdef usb_testing_config
 #include "SoftwareSerial.h"
@@ -39,18 +52,21 @@ HardwareSerial *fonaSerial = &Serial;
 #endif
 
 Adafruit_FONA fona = Adafruit_FONA(GSM_RST);
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, 4, 3 );
 
-uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0);
 
+///////////////////////////////
+////////// FUNCTIONS //////////
+///////////////////////////////
 
-void wake_from_sleep() {
+void wakeFromSleep() {
   sleep_disable();
   detachInterrupt(WAKE_PIN);
 }
 
-void go_to_sleep() {
+void goToSleep() {
   sleep_enable();
-  attachInterrupt(WAKE_PIN, wake_from_sleep, LOW);
+  attachInterrupt(WAKE_PIN, wakeFromSleep, LOW);
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   cli();
   sleep_bod_disable();
@@ -58,7 +74,7 @@ void go_to_sleep() {
   sleep_cpu();
 }
 
-void in_call() {
+void inCall() {
   while (1) {
     if ( !digitalRead(BUT_END) ) { // End button pressed
       if ( fona.hangUp() ) {
@@ -69,19 +85,23 @@ void in_call() {
   }
 }
 
-void begin_call() {
-  fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End tone
-  for(int i = 0; i<phonenumberlength; i++){
-    fona.playDTMF( phonenumber[i] );
-    if( fona.callPhone( phonenumber ) ) {
-      in_call();
+void beginCall() {
+  fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
+  for (int i = 0; i < phoneNumberLength; i++) {
+    fona.playDTMF( phoneNumber[i] );  // Play DTMF tones
+    if ( fona.callPhone( phoneNumber ) ) {
+      inCall();
     }
-    for( int j = 0; j<phonenumberlength; j++) {
-      phonenumber[j] = 0;
+    for ( int j = 0; j < phoneNumberLength; j++) {
+      phoneNumber[j] = 0;
     }
-    phonenumberlength = 0;
+    phoneNumberLength = 0;
   }
 }
+
+//////////////////////////////////
+///// ARDUINO CORE FUNCTIONS /////
+//////////////////////////////////
 
 void setup() {
   fonaSerial->begin(4800);
@@ -93,12 +113,31 @@ void loop() {
     while ( digitalRead(BUT_ANS) & !digitalRead(GSM_RING) ) delay(10); // Wait for answer button or end ring/call
     if ( !digitalRead(BUT_ANS) ) {
       if ( fona.pickUp() ) {
-        in_call();
+        inCall();
       }
     }
   }
 
   fona.sendCheckReply( F("AT+STTONE=1,20,1000"), F("OK") ); // Start tone
+
+  // Read from keypad
+  char key = keypad.getKey();
+  if ( key != NO_KEY ) {
+    phoneNumber[ phoneNumberLength ] = key;
+    phoneNumberLength++;
+    lastActiveTime = millis();
+  }
+
+  // Check for complete phone number (including +1 country code)
+  if ( ( phoneNumberLength = 10 & phoneNumber[0] != '1' ) || phoneNumberLength > 10 ) {
+    beginCall();
+  }
+
+  // Autoshutdown if inactive for extended period
+  // Typecast to long avoids "rollover" issues
+  if ( (long)(millis() - lastActiveTime) > TIMEOUT_SLEEP ) {
+    goToSleep();
+  }
 }
 
 
