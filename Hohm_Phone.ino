@@ -6,8 +6,9 @@
 ////////// PARAMETERS //////////
 ////////////////////////////////
 
-// Arduino will wake from sleep when WAKE_PIN is pulled low
+// Arduino will wake from sleep when WAKE_PIN is pulled low. Connect any waking buttons to WAKE_PIN
 #define WAKE_PIN 2
+
 #define BUT_ANS 12
 #define BUT_END 12
 
@@ -16,16 +17,17 @@
 #define GSM_TX A7
 #define GSM_RST 12
 #define GSM_RING A6
+#define GSM_KEY 12
 
 // TIMEOUT_SLEEP is the time to stay awake from last activity until sleep (milliseconds)
 #define TIMEOUT_SLEEP 60000
 
-// Comment the following line to use HW serial
-#define usb_testing_config
+// Comment the following line to use HW serial for Fona and disable debugging information
+#define USB_DEBUG
 
 // Keypad pinout
-byte rowPins[ROWS] = {9, 4, 5, 7};
-byte colPins[COLS] = {8, 10, 6};
+byte rowPins[4] = {9, 4, 5, 7};
+byte colPins[3] = {8, 10, 6};
 
 ////////////////////////////////////
 ////////// END PARAMETERS //////////
@@ -43,7 +45,7 @@ char keys[4][3] = {
 
 unsigned long lastActiveTime;
 
-#ifdef usb_testing_config
+#ifdef USB_DEBUG
 #include "SoftwareSerial.h"
 SoftwareSerial fonaSS = SoftwareSerial(GSM_RX, GSM_TX);
 SoftwareSerial *fonaSerial = &fonaSS;
@@ -62,9 +64,15 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, 4, 3 );
 void wakeFromSleep() {
   sleep_disable();
   detachInterrupt(WAKE_PIN);
+#ifdef USB_DEBUG
+  Serial.println("Woke up");
+#endif
 }
 
 void goToSleep() {
+#ifdef USB_DEBUG
+  Serial.println("Going to sleep");
+#endif
   sleep_enable();
   attachInterrupt(WAKE_PIN, wakeFromSleep, LOW);
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -78,6 +86,9 @@ void inCall() {
   while (1) {
     if ( !digitalRead(BUT_END) ) { // End button pressed
       if ( fona.hangUp() ) {
+#ifdef USB_DEBUG
+        Serial.println("Hanging up");
+#endif
         break;
       }
     }
@@ -86,10 +97,16 @@ void inCall() {
 }
 
 void beginCall() {
+#ifdef USB_DEBUG
+  Serial.println("Starting Call");
+#endif
   fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
   for (int i = 0; i < phoneNumberLength; i++) {
     fona.playDTMF( phoneNumber[i] );  // Play DTMF tones
     if ( fona.callPhone( phoneNumber ) ) {
+#ifdef USB_DEBUG
+      Serial.println("Call Started");
+#endif
       inCall();
     }
     for ( int j = 0; j < phoneNumberLength; j++) {
@@ -97,6 +114,9 @@ void beginCall() {
     }
     phoneNumberLength = 0;
   }
+#ifdef USB_DEBUG
+  Serial.println("Call ended");
+#endif
 }
 
 //////////////////////////////////
@@ -104,8 +124,24 @@ void beginCall() {
 //////////////////////////////////
 
 void setup() {
+  pinMode( WAKE_PIN, INPUT_PULLUP );
+  pinMode( BUT_ANS, INPUT_PULLUP );
+  pinMode( BUT_END, INPUT_PULLUP );
+  pinMode( GSM_RST, OUTPUT );
+  pinMode( GSM_RING, INPUT_PULLUP );
+  pinMode( GSM_KEY, OUTPUT );
+
+  digitalWrite( GSM_KEY, LOW );
+  digitalWrite( GSM_RST, HIGH );
+
   fonaSerial->begin(4800);
   if (! fona.begin(*fonaSerial)) while (1); //fona didn't start
+
+#ifdef USB_DEBUG
+  Serial.begin(9600);
+  Serial.flush();
+  Serial.println("Setup Complete");
+#endif
 }
 
 void loop() {
