@@ -90,14 +90,14 @@ void goToSleep() {
 
 void inCall() {
   while (1) {
-    if ( !digitalRead(BUT_END) ) { // End button pressed
-      if ( fona.hangUp() ) {
+    if ( !digitalRead(BUT_END) || fona.getCallStatus() < 3 ) { // End button pressed
+      fona.hangUp();
 #ifdef USB_DEBUG
-        Serial.println("Hanging up");
+      Serial.println("Hanging up");
 #endif
-        break;
-      }
+      break;
     }
+
     // numpad stuff
   }
 }
@@ -171,7 +171,7 @@ void loop() {
   }
 
   if ( startDialtone ) {
-    //fona.sendCheckReply( F("AT+STTONE=1,20,5000" ), F("OK") ); // Start tone
+    fona.sendCheckReply( F("AT+STTONE=1,20,500" ), F("OK") ); // Start tone
     startDialtone = false;
   }
 
