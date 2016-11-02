@@ -107,9 +107,6 @@ void beginCall() {
   Serial.println("Starting Call");
 #endif
   fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
-  for (int i = 0; i < phoneNumberLength; i++) {
-    fona.playDTMF( phoneNumber[i] );  // Play DTMF tones
-  }
   if ( fona.callPhone( phoneNumber ) ) {
 #ifdef USB_DEBUG
     Serial.println("Call Started");
@@ -180,6 +177,7 @@ void loop() {
   if ( key != NO_KEY ) {
     phoneNumber[ phoneNumberLength ] = key;
     phoneNumberLength = phoneNumberLength + 1;
+    fona.playDTMF( key );  // Play DTMF tone
     lastActiveTime = millis();
 #ifdef USB_DEBUG
     int i;
