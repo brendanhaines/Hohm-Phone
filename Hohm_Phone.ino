@@ -169,6 +169,7 @@ void loop() {
       }
     }
   }
+
   if ( startDialtone ) {
     //fona.sendCheckReply( F("AT+STTONE=1,20,5000" ), F("OK") ); // Start tone
     startDialtone = false;
@@ -186,13 +187,23 @@ void loop() {
       Serial.print(phoneNumber[i]);
       Serial.print(", ");
     }
-    Serial.println();
     Serial.println(phoneNumberLength);
 #endif
     // Check for complete phone number (including +1 country code)
     if ( ( phoneNumberLength == 10 & phoneNumber[0] != '1' ) || phoneNumberLength > 10 ) {
       beginCall();
     }
+  }
+
+  // Clear stored phone number on press of end button
+  if ( !digitalRead(BUT_END) ) {
+    for ( int j = 0; j < phoneNumberLength; j++) {
+      phoneNumber[j] = 0;
+    }
+    phoneNumberLength = 0;
+#ifdef USB_DEBUG
+    Serial.println( phoneNumberLength );
+#endif
   }
 
 #ifdef SLEEP
