@@ -8,14 +8,14 @@
 
 // Arduino will wake from sleep when WAKE_PIN is pulled low
 #define WAKE_PIN 2
-#define BUT_ANS 7
-#define BUT_END 8
+#define BUT_ANS 12
+#define BUT_END 12
 
 // RX/TX are in reference to the Arduino, not SIM800
 #define GSM_RX 3
-#define GSM_TX 4
-#define GSM_RST 5
-#define GSM_RING 6
+#define GSM_TX A7
+#define GSM_RST 12
+#define GSM_RING A6
 
 // TIMEOUT_SLEEP is the time to stay awake from last activity until sleep (milliseconds)
 #define TIMEOUT_SLEEP 60000
@@ -24,8 +24,8 @@
 #define usb_testing_config
 
 // Keypad pinout
-byte rowPins[4] = {9, 10, 11, 12};
-byte colPins[3] = {A0, A1, A2};
+byte rowPins[ROWS] = {9, 4, 5, 7};
+byte colPins[COLS] = {8, 10, 6};
 
 ////////////////////////////////////
 ////////// END PARAMETERS //////////
