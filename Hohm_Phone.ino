@@ -104,6 +104,7 @@ void inCall() {
     phoneNumber[j] = 0;
   }
   phoneNumberLength = 0;
+  startDialtone = true;
 }
 
 void beginCall() {
