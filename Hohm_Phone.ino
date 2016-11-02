@@ -123,6 +123,10 @@ void beginCall() {
 #endif
 }
 
+void resumeDialtone() {
+  fona.sendCheckReply( F("AT+STTONE=1,20,500" ), F("OK") ); // Start dialtone
+}
+
 //////////////////////////////////
 ///// ARDUINO CORE FUNCTIONS /////
 //////////////////////////////////
@@ -156,6 +160,8 @@ void setup() {
 #endif
   startDialtone = true;
   lastActiveTime = millis();
+
+  fona.sendCheckReply( F("AT+CLVL=20"), F("OK") ); // set dialtone volume
 }
 
 void loop() {
@@ -169,7 +175,7 @@ void loop() {
   }
 
   if ( startDialtone ) {
-    fona.sendCheckReply( F("AT+STTONE=1,20,500" ), F("OK") ); // Start tone
+    resumeDialtone();
     startDialtone = false;
   }
 
@@ -178,7 +184,9 @@ void loop() {
   if ( key != NO_KEY ) {
     phoneNumber[ phoneNumberLength ] = key;
     phoneNumberLength = phoneNumberLength + 1;
+
     fona.playDTMF( key );  // Play DTMF tone
+
     lastActiveTime = millis();
 #ifdef USB_DEBUG
     int i;
@@ -194,6 +202,7 @@ void loop() {
     }
   }
 
+
   // Clear stored phone number on press of end button
   if ( !digitalRead(BUT_END) ) {
     for ( int j = 0; j < phoneNumberLength; j++) {
@@ -203,6 +212,7 @@ void loop() {
 #ifdef USB_DEBUG
     Serial.println( phoneNumberLength );
 #endif
+    resumeDialtone();
   }
 
 #ifdef SLEEP
