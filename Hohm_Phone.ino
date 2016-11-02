@@ -9,21 +9,24 @@
 // Arduino will wake from sleep when WAKE_PIN is pulled low. Connect any waking buttons to WAKE_PIN
 #define WAKE_PIN 2
 
-#define BUT_ANS 12
-#define BUT_END 12
+#define BUT_ANS A3
+#define BUT_END A4
 
 // RX/TX are in reference to the Arduino, not SIM800
 #define GSM_RX 3
-#define GSM_TX A7
+#define GSM_TX 11
 #define GSM_RST 12
-#define GSM_RING A6
-#define GSM_KEY 12
+#define GSM_RING A5
+#define GSM_KEY A6
 
 // TIMEOUT_SLEEP is the time to stay awake from last activity until sleep (milliseconds)
-#define TIMEOUT_SLEEP 60000
+#define TIMEOUT_SLEEP 6000
 
 // Comment the following line to use HW serial for Fona and disable debugging information
 #define USB_DEBUG
+
+// Comment the following line to disable sleeping the Arduino
+//#define SLEEP
 
 // Keypad pinout
 byte rowPins[4] = {9, 4, 5, 7};
@@ -33,17 +36,19 @@ byte colPins[3] = {8, 10, 6};
 ////////// END PARAMETERS //////////
 ////////////////////////////////////
 
-char phoneNumber[15];
-uint8_t phoneNumberLength = 0;
+char phoneNumber[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int phoneNumberLength = 0;
 
 char keys[4][3] = {
   {'1', '2', '3'},
   {'4', '5', '6'},
   {'7', '8', '9'},
-  {'#', '0', '*'}
+  {'*', '0', '#'}
 };
 
 unsigned long lastActiveTime;
+
+bool startDialtone = false;
 
 #ifdef USB_DEBUG
 #include "SoftwareSerial.h"
@@ -67,6 +72,7 @@ void wakeFromSleep() {
 #ifdef USB_DEBUG
   Serial.println("Woke up");
 #endif
+  startDialtone = true;
 }
 
 void goToSleep() {
@@ -124,6 +130,10 @@ void beginCall() {
 //////////////////////////////////
 
 void setup() {
+#ifdef USB_DEBUG
+  Serial.begin(9600);
+  Serial.println("Booted. Setting up");
+#endif
   pinMode( WAKE_PIN, INPUT_PULLUP );
   pinMode( BUT_ANS, INPUT_PULLUP );
   pinMode( BUT_END, INPUT_PULLUP );
@@ -135,13 +145,19 @@ void setup() {
   digitalWrite( GSM_RST, HIGH );
 
   fonaSerial->begin(4800);
-  if (! fona.begin(*fonaSerial)) while (1); //fona didn't start
+  if (! fona.begin(*fonaSerial)) {
+#ifdef USB_DEBUG
+    Serial.println("Fona failed to respond");
+#endif
+    while (1); //fona didn't start
+  }
+  while ( !fona.setAudio(FONA_EXTAUDIO) ) {}
 
 #ifdef USB_DEBUG
-  Serial.begin(9600);
-  Serial.flush();
   Serial.println("Setup Complete");
 #endif
+  startDialtone = true;
+  lastActiveTime = millis();
 }
 
 void loop() {
@@ -153,27 +169,39 @@ void loop() {
       }
     }
   }
-
-  fona.sendCheckReply( F("AT+STTONE=1,20,1000"), F("OK") ); // Start tone
+  if ( startDialtone ) {
+    //fona.sendCheckReply( F("AT+STTONE=1,20,5000" ), F("OK") ); // Start tone
+    startDialtone = false;
+  }
 
   // Read from keypad
   char key = keypad.getKey();
   if ( key != NO_KEY ) {
     phoneNumber[ phoneNumberLength ] = key;
-    phoneNumberLength++;
+    phoneNumberLength = phoneNumberLength + 1;
     lastActiveTime = millis();
+#ifdef USB_DEBUG
+    int i;
+    for (i = 0; i < 15; i = i + 1) {
+      Serial.print(phoneNumber[i]);
+      Serial.print(", ");
+    }
+    Serial.println();
+    Serial.println(phoneNumberLength);
+#endif
+    // Check for complete phone number (including +1 country code)
+    if ( ( phoneNumberLength == 10 & phoneNumber[0] != '1' ) || phoneNumberLength > 10 ) {
+      beginCall();
+    }
   }
 
-  // Check for complete phone number (including +1 country code)
-  if ( ( phoneNumberLength = 10 & phoneNumber[0] != '1' ) || phoneNumberLength > 10 ) {
-    beginCall();
-  }
-
+#ifdef SLEEP
   // Autoshutdown if inactive for extended period
   // Typecast to long avoids "rollover" issues
   if ( (long)(millis() - lastActiveTime) > TIMEOUT_SLEEP ) {
     goToSleep();
   }
+#endif
 }
 
 
