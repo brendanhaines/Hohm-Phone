@@ -109,17 +109,17 @@ void beginCall() {
   fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
   for (int i = 0; i < phoneNumberLength; i++) {
     fona.playDTMF( phoneNumber[i] );  // Play DTMF tones
-    if ( fona.callPhone( phoneNumber ) ) {
-#ifdef USB_DEBUG
-      Serial.println("Call Started");
-#endif
-      inCall();
-    }
-    for ( int j = 0; j < phoneNumberLength; j++) {
-      phoneNumber[j] = 0;
-    }
-    phoneNumberLength = 0;
   }
+  if ( fona.callPhone( phoneNumber ) ) {
+#ifdef USB_DEBUG
+    Serial.println("Call Started");
+#endif
+    inCall();
+  }
+  for ( int j = 0; j < phoneNumberLength; j++) {
+    phoneNumber[j] = 0;
+  }
+  phoneNumberLength = 0;
 #ifdef USB_DEBUG
   Serial.println("Call ended");
 #endif
