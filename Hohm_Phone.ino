@@ -100,6 +100,10 @@ void inCall() {
 
     // numpad stuff
   }
+  for ( int j = 0; j < phoneNumberLength; j++) {
+    phoneNumber[j] = 0;
+  }
+  phoneNumberLength = 0;
 }
 
 void beginCall() {
@@ -113,10 +117,6 @@ void beginCall() {
 #endif
     inCall();
   }
-  for ( int j = 0; j < phoneNumberLength; j++) {
-    phoneNumber[j] = 0;
-  }
-  phoneNumberLength = 0;
 #ifdef USB_DEBUG
   Serial.println("Call ended");
 #endif
