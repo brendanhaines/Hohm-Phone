@@ -15,7 +15,7 @@
 // RX/TX are in reference to the Arduino, not SIM800
 #define GSM_RX 3
 #define GSM_TX 11
-#define GSM_RST 12
+#define GSM_RST A2
 #define GSM_RING A5
 #define GSM_KEY A6
 
