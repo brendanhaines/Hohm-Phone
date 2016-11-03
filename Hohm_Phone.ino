@@ -47,7 +47,7 @@ char keys[4][3] = {
 };
 
 unsigned long lastActiveTime;
-
+bool dialtoneActive = false;
 bool startDialtone = false;
 
 #ifdef USB_DEBUG
@@ -112,6 +112,7 @@ void beginCall() {
   Serial.println("Starting Call");
 #endif
   fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
+  dialtoneActive = false;
   if ( fona.callPhone( phoneNumber ) ) {
 #ifdef USB_DEBUG
     Serial.println("Call Started");
@@ -124,7 +125,8 @@ void beginCall() {
 }
 
 void resumeDialtone() {
-  fona.sendCheckReply( F("AT+STTONE=1,20,500" ), F("OK") ); // Start dialtone
+  fona.sendCheckReply( F("AT+STTONE=1,20,30000" ), F("OK") ); // Start dialtone
+  dialtoneActive = true;
 }
 
 //////////////////////////////////
@@ -185,6 +187,11 @@ void loop() {
     phoneNumber[ phoneNumberLength ] = key;
     phoneNumberLength = phoneNumberLength + 1;
 
+    if( dialtoneActive ) {
+      fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
+      dialtoneActive = false;
+      delay(50);
+    }
     fona.playDTMF( key );  // Play DTMF tone
 
     lastActiveTime = millis();
