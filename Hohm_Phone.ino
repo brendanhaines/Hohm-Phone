@@ -169,7 +169,7 @@ void loop() {
     while ( digitalRead(BUT_ANS) & !digitalRead(GSM_RING) ) delay(10); // Wait for answer button or end ring/call
     if ( !digitalRead(BUT_ANS) ) {
       fona.pickUp();
-      delay(50);
+      delay(100);
       inCall();
     }
   }
