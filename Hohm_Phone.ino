@@ -22,6 +22,11 @@
 // TIMEOUT_SLEEP is the time to stay awake from last activity until sleep (milliseconds)
 #define TIMEOUT_SLEEP 6000
 
+// Charging voltage thresholds. Will turn on charging at CHG_VLO and turn off charging at CHG_VHI (millivolts)
+#define CHG_VLO 3900
+#define CHG_VHI 4100
+#define CHG_PIN A0
+
 // Comment the following line to use HW serial for Fona and disable debugging information
 #define USB_DEBUG
 
@@ -144,9 +149,11 @@ void setup() {
   pinMode( GSM_RST, OUTPUT );
   pinMode( GSM_RING, INPUT_PULLUP );
   pinMode( GSM_KEY, OUTPUT );
+  pinMode( CHG_PIN, OUTPUT );
 
   digitalWrite( GSM_KEY, LOW );
   digitalWrite( GSM_RST, HIGH );
+  digitalWrite( CHG_PIN, HIGH );
 
   fonaSerial->begin(4800);
   if (! fona.begin(*fonaSerial)) {
@@ -187,7 +194,7 @@ void loop() {
     phoneNumber[ phoneNumberLength ] = key;
     phoneNumberLength = phoneNumberLength + 1;
 
-    if( dialtoneActive ) {
+    if ( dialtoneActive ) {
       fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
       dialtoneActive = false;
       delay(50);
@@ -220,6 +227,14 @@ void loop() {
     Serial.println( phoneNumberLength );
 #endif
     resumeDialtone();
+  }
+
+  uint16_t vbat;
+  fona.getBattVoltage(&vbat);
+  if ( vbat < CHG_VLO ) {
+    digitalWrite( CHG_PIN, HIGH );
+  } else if ( vbat > CHG_VHI ) {
+    digitalWrite( CHG_PIN, LOW );
   }
 
 #ifdef SLEEP
