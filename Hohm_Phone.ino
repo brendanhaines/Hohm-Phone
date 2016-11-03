@@ -17,7 +17,6 @@
 #define GSM_TX 11
 #define GSM_RST A2
 #define GSM_RING A5
-#define GSM_KEY A6
 
 // TIMEOUT_SLEEP is the time to stay awake from last activity until sleep (milliseconds)
 #define TIMEOUT_SLEEP 6000
@@ -148,10 +147,8 @@ void setup() {
   pinMode( BUT_END, INPUT_PULLUP );
   pinMode( GSM_RST, OUTPUT );
   pinMode( GSM_RING, INPUT_PULLUP );
-  pinMode( GSM_KEY, OUTPUT );
   pinMode( CHG_PIN, OUTPUT );
 
-  digitalWrite( GSM_KEY, LOW );
   digitalWrite( GSM_RST, HIGH );
   digitalWrite( CHG_PIN, HIGH );
 
