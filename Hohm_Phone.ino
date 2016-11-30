@@ -23,8 +23,8 @@
 #define MAG_SENSE A1
 
 // Keypad pinout
-byte rowPins[4] = {9, 4, 5, 7};
-byte colPins[3] = {8, 10, 6};
+byte rowPins[4] = {5, 10, 9, 7};
+byte colPins[3] = {6, 4, 8};
 
 ////////////////////////////////////
 ////////// END PARAMETERS //////////
