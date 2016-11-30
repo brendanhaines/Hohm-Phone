@@ -105,10 +105,10 @@ void setup() {
   digitalWrite( GSM_RST, HIGH );
   digitalWrite( CHG_PIN, HIGH );
 
-  digitalWrite( LED_NO_SERVICE, LOW );
-  fonaSerial->begin(115200);
+  fonaSerial->begin(4800);
   if (! fona.begin(*fonaSerial)) {
     while (1); //fona didn't start
+    digitalWrite( LED_BAT_LOW, HIGH );
   }
   //while ( !fona.setAudio(FONA_EXTAUDIO) ) {}
 
@@ -118,6 +118,8 @@ void setup() {
   digitalWrite( LED_BAT_LOW, LOW );
   fona.sendCheckReply( F("AT+CLVL=20"), F("OK") ); // set dialtone volume
 
+  digitalWrite( LED_BAT_LOW, LOW );
+  digitalWrite( LED_NO_SERVICE, LOW );
 }
 
 void loop() {
