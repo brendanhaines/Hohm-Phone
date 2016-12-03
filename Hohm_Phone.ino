@@ -18,8 +18,6 @@
 // Low battery light threshold
 #define CHG_VLO 3900
 
-#define MAG_SENSE A1
-
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
 byte colPins[3] = {6, 4, 8};
@@ -43,7 +41,6 @@ bool dialtoneActive = false;
 bool startDialtone = false;
 
 HardwareSerial *fonaSerial = &Serial;
-
 Adafruit_FONA fona = Adafruit_FONA(GSM_RST);
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, 4, 3 );
 
@@ -56,9 +53,6 @@ void inCall() {
   while (1) {
     if ( !digitalRead(BUT_END) || fona.getCallStatus() < 3 ) { // End button pressed
       fona.hangUp();
-#ifdef USB_DEBUG
-      Serial.println("Hanging up");
-#endif
       break;
     }
 
