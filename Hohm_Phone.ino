@@ -171,11 +171,13 @@ void loop() {
   uint16_t vbat;
   fona.getBattVoltage(&vbat);
   if ( vbat < CHG_VLO ) {
-    digitalWrite( CHG_PIN, HIGH );
-  } else if ( vbat > CHG_VHI ) {
     digitalWrite( CHG_PIN, LOW );
+    digitalWrite( LED_BAT_LOW, HIGH );
+  } else if ( vbat > CHG_VHI ) {
+    digitalWrite( CHG_PIN, HIGH );
+  } else {
+    digitalWrite( LED_BAT_LOW, LOW );
   }
-
 }
 
 
