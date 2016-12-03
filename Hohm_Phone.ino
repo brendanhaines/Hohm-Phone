@@ -15,10 +15,8 @@
 #define GSM_RST A2
 #define GSM_RING A5
 
-// Charging voltage thresholds. Will turn on charging at CHG_VLO and turn off charging at CHG_VHI (millivolts)
+// Low battery light threshold
 #define CHG_VLO 3900
-#define CHG_VHI 4100
-#define CHG_PIN A0
 
 #define MAG_SENSE A1
 
@@ -171,10 +169,7 @@ void loop() {
   uint16_t vbat;
   fona.getBattVoltage(&vbat);
   if ( vbat < CHG_VLO ) {
-    digitalWrite( CHG_PIN, LOW );
     digitalWrite( LED_BAT_LOW, HIGH );
-  } else if ( vbat > CHG_VHI ) {
-    digitalWrite( CHG_PIN, HIGH );
   } else {
     digitalWrite( LED_BAT_LOW, LOW );
   }
