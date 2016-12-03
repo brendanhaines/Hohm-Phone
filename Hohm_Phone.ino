@@ -18,6 +18,9 @@
 // Low battery light threshold
 #define CHG_VLO 3800
 
+// Time in miliseconds to stop listening for keypad input
+#define SLEEP_TIMEOUT 120000
+
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
 byte colPins[3] = {6, 4, 8};
@@ -39,6 +42,7 @@ char keys[4][3] = {
 unsigned long lastActiveTime;
 bool dialtoneActive = false;
 bool startDialtone = false;
+bool awake = true;
 
 HardwareSerial *fonaSerial = &Serial;
 Adafruit_FONA fona = Adafruit_FONA(GSM_RST);
@@ -78,6 +82,13 @@ void resumeDialtone() {
   dialtoneActive = true;
 }
 
+void clearPhoneNumber() {
+  for ( int j = 0; j < phoneNumberLength; j++) {
+    phoneNumber[j] = 0;
+  }
+  phoneNumberLength = 0;
+}
+
 //////////////////////////////////
 ///// ARDUINO CORE FUNCTIONS /////
 //////////////////////////////////
@@ -103,7 +114,7 @@ void setup() {
 
   startDialtone = true;
   lastActiveTime = millis();
-  
+
   fona.sendCheckReply( F("AT+CLVL=100"), F("OK") ); // set dialtone volume
 
   digitalWrite( LED_BAT_LOW, LOW );
@@ -111,59 +122,64 @@ void setup() {
 }
 
 void loop() {
-  if ( !digitalRead(GSM_RING) ) {
-    while ( digitalRead(BUT_ANS) & !digitalRead(GSM_RING) ) delay(10); // Wait for answer button or end ring/call
-    if ( !digitalRead(BUT_ANS) ) {
-      fona.pickUp();
-      delay(100);
-      inCall();
+  if ( awake ) {
+    
+    // Handle Incoming Call
+    if ( !digitalRead(GSM_RING) ) {
+      while ( digitalRead(BUT_ANS) & !digitalRead(GSM_RING) ) delay(10); // Wait for answer button or end ring/call
+      if ( !digitalRead(BUT_ANS) ) {
+        fona.pickUp();
+        delay(100);
+        inCall();
+      }
     }
-  }
 
-  if ( startDialtone ) {
-    resumeDialtone();
-    startDialtone = false;
-  }
-
-  // Read from keypad
-  char key = keypad.getKey();
-  if ( key != NO_KEY ) {
-    phoneNumber[ phoneNumberLength ] = key;
-    phoneNumberLength = phoneNumberLength + 1;
-
-    if ( dialtoneActive ) {
-      fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
-      dialtoneActive = false;
-      delay(50);
+    // Begin dialtone if necessary
+    if ( startDialtone ) {
+      resumeDialtone();
+      startDialtone = false;
     }
-    fona.playDTMF( key );  // Play DTMF tone
 
-    lastActiveTime = millis();
-    // Check for complete phone number (including +1 country code)
-    if ( ( phoneNumberLength == 10 & phoneNumber[0] != '1' ) || phoneNumberLength > 10 ) {
-      beginCall();
+    // Read keypad input
+    char key = keypad.getKey();
+    if ( key != NO_KEY ) {
+      phoneNumber[ phoneNumberLength ] = key;
+      phoneNumberLength = phoneNumberLength + 1;
+
+      if ( dialtoneActive ) {
+        fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
+        dialtoneActive = false;
+        delay(50);
+      }
+      fona.playDTMF( key );  // Play DTMF tone
+
+      lastActiveTime = millis();
+      // Check for complete phone number (including +1 country code)
+      if ( ( phoneNumberLength == 10 & phoneNumber[0] != '1' ) || phoneNumberLength > 10 ) {
+        beginCall();
+      }
     }
-  }
 
-
-  // Clear stored phone number on press of end button
-  if ( !digitalRead(BUT_END) ) {
-    for ( int j = 0; j < phoneNumberLength; j++) {
-      phoneNumber[j] = 0;
+    // Clear stored phone number on press of end button
+    if ( !digitalRead(BUT_END) ) {
+      clearPhoneNumber();
+      resumeDialtone();
     }
-    phoneNumberLength = 0;
-    resumeDialtone();
-  }
 
-  // Battery Management
-  uint16_t vbat;
-  fona.getBattVoltage(&vbat);
-  if ( vbat < CHG_VLO ) {
-    digitalWrite( LED_BAT_LOW, HIGH );
+    // Battery Management
+    uint16_t vbat;
+    fona.getBattVoltage(&vbat);
+    if ( vbat < CHG_VLO ) {
+      digitalWrite( LED_BAT_LOW, HIGH );
+    } else {
+      digitalWrite( LED_BAT_LOW, LOW );
+    }
   } else {
-    digitalWrite( LED_BAT_LOW, LOW );
+    // sleeping
+    delay(100);
   }
 }
+
 
 
 
