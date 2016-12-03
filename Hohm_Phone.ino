@@ -132,11 +132,16 @@ void loop() {
 
     // Handle Incoming Call
     if ( !digitalRead(GSM_RING) ) {
-      while ( digitalRead(BUT_ANS) & !digitalRead(GSM_RING) ) delay(10); // Wait for answer button or end ring/call
+      while ( digitalRead(BUT_ANS) & digitalRead(BUT_END) & !digitalRead(GSM_RING) ) delay(10); // Wait for answer button or end ring/call
       if ( !digitalRead(BUT_ANS) ) {
         fona.pickUp();
         delay(100);
         inCall();
+      } else if( !digitalRead(BUT_END) ) {
+        fona.hangUp();
+        clearPhoneNumber();
+        startDialtone = true;
+        delay(100);
       }
     }
 
