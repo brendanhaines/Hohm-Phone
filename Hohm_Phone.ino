@@ -22,7 +22,7 @@
 #define SLEEP_TIMEOUT 120000
 
 // RSSI value below which No Signal LED will light
-#define RSSI_THRESHOLD
+#define RSSI_THRESHOLD 5
 
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
@@ -180,10 +180,10 @@ void loop() {
 
     uint8_t rssi;
     rssi = fona.getRSSI();
-    if( rssi < RSSI_THRESHOLD ) {
-      digitalWrite( LED_NO_SIGNAL, HIGH );
+    if( rssi < RSSI_THRESHOLD | rssi == 99 ) {
+      digitalWrite( LED_NO_SERVICE, HIGH );
     } else {
-      digitalWrite( LED_NO_SIGNAL, LOW );
+      digitalWrite( LED_NO_SERVICE, LOW );
     }
     
   } else {
