@@ -14,6 +14,7 @@
 
 #define GSM_RST A2
 #define GSM_RING A5
+#define GSM_BAUDRATE 4800
 
 // Low battery light threshold
 #define CHG_VLO 3800
@@ -113,7 +114,7 @@ void setup() {
   digitalWrite( LED_NO_SERVICE, HIGH );
 
   digitalWrite( GSM_RST, HIGH );
-  fonaSerial->begin(4800);
+  fonaSerial->begin(GSM_BAUDRATE);
   if (! fona.begin(*fonaSerial)) {
     while (1); //fona didn't start
     digitalWrite( LED_BAT_LOW, HIGH );
