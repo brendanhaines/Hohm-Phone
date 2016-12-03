@@ -67,6 +67,7 @@ void inCall() {
   }
   clearPhoneNumber();
   startDialtone = true;
+  lastActiveTime = millis();
   delay(100);
 }
 
