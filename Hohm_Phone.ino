@@ -19,7 +19,7 @@
 #define CHG_VLO 3800
 
 // Time in miliseconds to stop listening for keypad input
-#define SLEEP_TIMEOUT 120000
+#define SLEEP_TIMEOUT 30000
 
 // RSSI value below which No Service LED will light
 #define RSSI_THRESHOLD 3
@@ -50,7 +50,6 @@ bool awake = true;
 HardwareSerial *fonaSerial = &Serial;
 Adafruit_FONA fona = Adafruit_FONA(GSM_RST);
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, 4, 3 );
-
 
 ///////////////////////////////
 ////////// FUNCTIONS //////////
@@ -92,6 +91,12 @@ void clearPhoneNumber() {
   phoneNumberLength = 0;
 }
 
+void goToSleep() {
+  digitalWrite( LED_NO_SERVICE, LOW );
+  digitalWrite( LED_BAT_LOW, LOW );
+  awake = false;
+}
+
 //////////////////////////////////
 ///// ARDUINO CORE FUNCTIONS /////
 //////////////////////////////////
@@ -113,12 +118,11 @@ void setup() {
     while (1); //fona didn't start
     digitalWrite( LED_BAT_LOW, HIGH );
   }
-  //while ( !fona.setAudio(FONA_EXTAUDIO) ) {}
 
   startDialtone = true;
   lastActiveTime = millis();
 
-  fona.sendCheckReply( F("AT+CLVL=100"), F("OK") ); // set dialtone volume
+  fona.sendCheckReply( F("AT+CLVL=100"), F("OK") ); // set volume
 
   digitalWrite( LED_BAT_LOW, LOW );
   digitalWrite( LED_NO_SERVICE, LOW );
@@ -126,7 +130,7 @@ void setup() {
 
 void loop() {
   if ( awake ) {
-    
+
     // Handle Incoming Call
     if ( !digitalRead(GSM_RING) ) {
       while ( digitalRead(BUT_ANS) & !digitalRead(GSM_RING) ) delay(10); // Wait for answer button or end ring/call
@@ -180,20 +184,22 @@ void loop() {
 
     uint8_t rssi;
     rssi = fona.getRSSI();
-    if( rssi < RSSI_THRESHOLD | rssi == 99 ) {
+    if ( rssi < RSSI_THRESHOLD || rssi == 99 ) {
       digitalWrite( LED_NO_SERVICE, HIGH );
     } else {
       digitalWrite( LED_NO_SERVICE, LOW );
     }
-    
+
+    // If inactive, sleep
+    if ( (long)(millis() - lastActiveTime) > SLEEP_TIMEOUT ) {
+      goToSleep();
+    }
   } else {
     // sleeping
     delay(100);
+    if ( !digitalRead( BUT_ANS ) || !digitalRead( BUT_END ) || !digitalRead( GSM_RING )  ) {
+      lastActiveTime = millis();
+      awake = true;
+    }
   }
 }
-
-
-
-
-
-
