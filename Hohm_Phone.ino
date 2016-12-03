@@ -16,7 +16,7 @@
 #define GSM_RING A5
 
 // Low battery light threshold
-#define CHG_VLO 3900
+#define CHG_VLO 3800
 
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
@@ -87,7 +87,6 @@ void setup() {
   pinMode( BUT_END, INPUT_PULLUP );
   pinMode( GSM_RST, OUTPUT );
   pinMode( GSM_RING, INPUT_PULLUP );
-  pinMode( CHG_PIN, OUTPUT );
   pinMode( LED_BAT_LOW, OUTPUT);
   pinMode( LED_NO_SERVICE, OUTPUT);
 
@@ -95,7 +94,6 @@ void setup() {
   digitalWrite( LED_NO_SERVICE, HIGH );
 
   digitalWrite( GSM_RST, HIGH );
-  digitalWrite( CHG_PIN, HIGH );
 
   fonaSerial->begin(4800);
   if (! fona.begin(*fonaSerial)) {
