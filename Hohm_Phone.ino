@@ -21,6 +21,9 @@
 // Time in miliseconds to stop listening for keypad input
 #define SLEEP_TIMEOUT 120000
 
+// RSSI value below which No Signal LED will light
+#define RSSI_THRESHOLD
+
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
 byte colPins[3] = {6, 4, 8};
@@ -166,7 +169,7 @@ void loop() {
       resumeDialtone();
     }
 
-    // Battery Management
+    // Indicator LEDs
     uint16_t vbat;
     fona.getBattVoltage(&vbat);
     if ( vbat < CHG_VLO ) {
@@ -174,6 +177,15 @@ void loop() {
     } else {
       digitalWrite( LED_BAT_LOW, LOW );
     }
+
+    uint8_t rssi;
+    rssi = fona.getRSSI();
+    if( rssi < RSSI_THRESHOLD ) {
+      digitalWrite( LED_NO_SIGNAL, HIGH );
+    } else {
+      digitalWrite( LED_NO_SIGNAL, LOW );
+    }
+    
   } else {
     // sleeping
     delay(100);
