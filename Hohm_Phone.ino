@@ -19,7 +19,7 @@
 #define CHG_VLO 3800
 
 // Time in miliseconds to stop listening for keypad input
-#define SLEEP_TIMEOUT 30000
+#define SLEEP_TIMEOUT 120000
 
 // RSSI value below which No Service LED will light
 #define RSSI_THRESHOLD 3
@@ -80,7 +80,7 @@ void beginCall() {
 }
 
 void resumeDialtone() {
-  fona.sendCheckReply( F("AT+STTONE=1,20,30000" ), F("OK") ); // Start dialtone
+  fona.sendCheckReply( ("AT+STTONE=1,20," + String(SLEEP_TIMEOUT)).c_str(), "OK" ); // Start dialtone
   dialtoneActive = true;
 }
 
