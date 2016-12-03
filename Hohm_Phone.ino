@@ -21,8 +21,8 @@
 // Time in miliseconds to stop listening for keypad input
 #define SLEEP_TIMEOUT 120000
 
-// RSSI value below which No Signal LED will light
-#define RSSI_THRESHOLD 5
+// RSSI value below which No Service LED will light
+#define RSSI_THRESHOLD 3
 
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
