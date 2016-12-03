@@ -22,7 +22,7 @@
 #define SLEEP_TIMEOUT 120000
 
 // RSSI value below which No Service LED will light
-#define RSSI_THRESHOLD 3
+#define RSSI_THRESHOLD 1 
 
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
@@ -196,7 +196,6 @@ void loop() {
     }
   } else {
     // sleeping
-    delay(100);
     if ( !digitalRead( BUT_ANS ) || !digitalRead( BUT_END ) || !digitalRead( GSM_RING )  ) {
       lastActiveTime = millis();
       awake = true;
