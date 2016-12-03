@@ -14,7 +14,7 @@
 
 #define GSM_RST A2
 #define GSM_RING A5
-#define GSM_BAUDRATE 4800
+#define GSM_BAUDRATE 115200
 
 // Low battery light threshold
 #define CHG_VLO 3800
@@ -23,7 +23,7 @@
 #define SLEEP_TIMEOUT 120000
 
 // RSSI value below which No Service LED will light
-#define RSSI_THRESHOLD 1 
+#define RSSI_THRESHOLD 1
 
 // Keypad pinout
 byte rowPins[4] = {5, 10, 9, 7};
@@ -65,11 +65,9 @@ void inCall() {
 
     // numpad stuff
   }
-  for ( int j = 0; j < phoneNumberLength; j++) {
-    phoneNumber[j] = 0;
-  }
-  phoneNumberLength = 0;
+  clearPhoneNumber();
   startDialtone = true;
+  delay(100);
 }
 
 void beginCall() {
@@ -157,7 +155,7 @@ void loop() {
       if ( dialtoneActive ) {
         fona.sendCheckReply( F("AT+STTONE=0"), F("OK") ); // End dialtone
         dialtoneActive = false;
-        delay(50);
+        delay(100);
       }
       fona.playDTMF( key );  // Play DTMF tone
 
