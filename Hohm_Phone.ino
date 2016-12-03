@@ -94,7 +94,6 @@ void setup() {
   digitalWrite( LED_NO_SERVICE, HIGH );
 
   digitalWrite( GSM_RST, HIGH );
-
   fonaSerial->begin(4800);
   if (! fona.begin(*fonaSerial)) {
     while (1); //fona didn't start
@@ -105,8 +104,7 @@ void setup() {
   startDialtone = true;
   lastActiveTime = millis();
   
-  digitalWrite( LED_BAT_LOW, LOW );
-  fona.sendCheckReply( F("AT+CLVL=20"), F("OK") ); // set dialtone volume
+  fona.sendCheckReply( F("AT+CLVL=100"), F("OK") ); // set dialtone volume
 
   digitalWrite( LED_BAT_LOW, LOW );
   digitalWrite( LED_NO_SERVICE, LOW );
