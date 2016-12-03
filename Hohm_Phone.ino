@@ -142,6 +142,8 @@ void loop() {
         clearPhoneNumber();
         startDialtone = true;
         delay(100);
+        resumeDialtone();
+        lastActiveTime = millis();
       }
     }
 
