@@ -1,0 +1,66 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{parskip}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{arydshln}
+\usepackage{amsmath}
+
+\begin{document}
+\title{Dual-Tone Multi-Frequency Signaling}
+\author{Brendan Haines}
+\maketitle
+
+\section{Encoding}
+Dual-Tone Multi Frequency Signaling uses audible tones as opposed to digital signals due to the nature of the mediums they are broadcast over. Since DTMF is often used with radio phones as well as traditional "landline" telephones, and these technologies are designed to carry voice well, staying within the same frequency range reduces complexity and expense of specialized equipment at both the transmitting and receiving stations. Often, the speaker output of a radio can simply be plugged into a decoder with no additional specialized hardware, resulting in lower equipment costs\cite{DTMF_genave}.
+
+\subsection{Frequencies\cite{wiki:DTMF}}
+\begin{tabular}{|c c c : c | l |}
+	\hline
+	1 & 2 & 3 & A & 687 Hz \\
+	4 & 5 & 6 & B & 770 Hz\\
+	7 & 8 & 9 & C & 852 Hz\\
+	$\ast$ & 0 & \# & D & 941 Hz\\
+	\hline
+	1209 Hz & 1336 Hz & 1477 Hz & 1633 Hz \\
+	\cline{1-4}
+\end{tabular}
+
+The A, B, C, and D keys are omitted on most handsets however are often used for automation purposes for triggering of remote functions such as controling an amateur radio repeater during an active phone call\cite{wiki:DTMF}. 
+
+\subsection{Timing}
+DTF uses a "mark" (amplitude $\neq$ 0) followed by a "space" (amplitude = 0). Timing can vary widely depending on the system being used. For example, when using a manual encoder such as an ordinary telephone each button press will create a mark and the time between presses will be spaces. Higher speeds can be achieved using automatic or "store and forward" DTMF encoders. Motorola uses a standard of 250ms mark and 250ms space, and other systems include 40ms/20ms or 20ms/20ms mark and space respectively\cite{DTMF_genave}.
+
+\section{Decoding}
+Originally decoded using tuned filter banks, however DSP now dominates decoding and the Goertzel algorthim is often used\cite{wiki:DTMF}.
+
+\subsection{Goertzel Algorithm}
+The Goertzel algorithm or Goertzel filter uses the Discrete Fourier Transform (DFT) to evaluate frequency content of a signal at specific frequencies very efficiently. Although the Fast Fourier Transform (FFT) is more efficient for analyzing a complete spectrum of frequency, in the case where only a few frequencies are relevant (such as the 8 DTMF frequencies), the Goertzel algorithm is more numerically efficient. It works well even on small processors in embedded applications\cite{wiki:Goertzel}
+
+Where $x[n]$ is the $n^{th}$ sample and $\omega _{0}$ is frequency in radians per sample, an intermediate sequence $s[n]$:
+$$s[-2]=s[-1]=0$$
+\begin{equation} \label{eqn:stage_1_goertzel}
+s[n] = x[n] + 2 cos(\omega _{0})s[n-1] - s[n-2]
+\end{equation}
+
+The second stage of the Goertzel filter applies to $s[n]$, producing output sequence $y[n]$:
+\begin{equation} \label{eqn:stage_2_goertzel}
+y[n] = s[n] - e^{-j\omega _{0}}s[n-1]
+\end{equation}
+
+A Z-transform converts a discrete-time signal to a complex frequency domain\cite{wiki:Z-transform}. It can be applied to equations \ref{eqn:stage_1_goertzel} and \ref{eqn:stage_2_goertzel} respectively:
+\begin{align} \label{eqn:z_goertzel}
+\frac{S(z)}{X(z)} &= \frac{1}{1-2cos(\omega _{0})z^{-1} + z^{-2}}\nonumber\\
+&= \frac{1}{(1-e^{+j\omega _{0}} z^{-1})(1 - e^{-j\omega _{0}}z^{-1})}\\
+\frac{Y(z)}{S(z)} &= 1 - e^{-j\omega _{0}} z^{-1}
+\end{align}
+
+The combined transfer function of the cascade of the two filters:
+\begin{align} \label{eqn:z_combined_goertzel}
+\frac{S(z)}{X(z)}\frac{Y(z)}{S(z)} = \frac{Y(z)}{X(z)} &= \frac{(1-e^{-j\omega _{0}}z^{-1})}{(1-e^{+j\omega _{0}} z^{-1})(1 - e^{-j\omega _{0}}z^{-1})}\nonumber\\
+&= \frac{1}{(1-e^{+j\omega _{0}} z^{-1})}
+\end{align}
+
+\bibliography{DTMF_Research}{}
+\bibliographystyle{IEEEtran}
+\end{document}
